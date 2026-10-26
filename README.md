@@ -98,3 +98,10 @@ python -m unittest discover tests
 
 ## 📄 License
 MIT License
+
+## 👾Team Members..
+
+- **Parli Sojitra**
+- **Pari Gupta**
+- **Tanmay Deore**
+- **Swarup Surwase**
