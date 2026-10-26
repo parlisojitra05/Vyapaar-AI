@@ -109,7 +109,7 @@ class TestCore(unittest.TestCase):
 
     def test_agent_deterministic_fallback(self):
         from unittest.mock import patch
-        with patch("llm.is_model_available", return_value=False):
+        with patch("llm.is_llm_available", return_value=False):
             rep = agent.answer(self.conn, "who owes me money?")
             self.assertIn("Total pending:", rep["text"])
             self.assertIn("owes the most", rep["text"])

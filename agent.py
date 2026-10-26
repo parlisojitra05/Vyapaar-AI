@@ -1,4 +1,5 @@
 import re
+# llm.is_llm_available() checks Groq (cloud) OR Ollama (local)
 
 import actions
 import llm
@@ -208,8 +209,8 @@ def answer(conn, question, on_event=None):
     elif t == "what needs restocking":
         return _answer_low_stock(conn, on_event)
 
-    # Ollama LLM Reasoning with live database tool execution
-    if llm.is_model_available():
+    # LLM Reasoning: Groq (cloud/Vercel) or Ollama (local) with live database tool execution
+    if llm.is_llm_available():
         llm_reply = llm.run_llm_agent(conn, question, on_event=on_event)
         if llm_reply and llm_reply.get("text"):
             return llm_reply
