@@ -1,0 +1,52 @@
+/* VYAPAAR PULSE — scope: .vy-pulse only. State is set with data-state (and data-channel for tools). */
+.vy-pulse{--vy-ink:#171713;--vy-ivory:#F5F0E7;--vy-amber:#D99A4E;--vy-gold:#E8BD7A;--vy-mute:#A9A295;display:inline-flex;align-items:center;gap:12px;color:var(--vy-ivory);font:500 14px/1.3 Inter,system-ui,sans-serif}
+.vy-pulse svg{width:var(--vy-size,56px);height:var(--vy-size,56px);overflow:visible;flex:none}
+.vy-pulse .ring{fill:none;stroke:var(--vy-mute);stroke-width:1.1;transform-origin:0 0;transform-box:view-box}
+.vy-pulse .tk{stroke:var(--vy-mute);stroke-width:1.1;stroke-linecap:round}
+.vy-pulse .spoke{stroke:var(--vy-ivory);stroke-width:1;opacity:.5;stroke-linecap:round}
+.vy-pulse .edge{fill:none;stroke:var(--vy-mute);stroke-width:.8;opacity:.6}
+.vy-pulse .pt{fill:var(--vy-ivory)}
+.vy-pulse .core{fill:var(--vy-amber);transform-origin:0 0}
+.vy-pulse .ripple{fill:none;stroke:var(--vy-amber);stroke-width:.9;opacity:0;transform-origin:0 0}
+.vy-pulse .ind{fill:var(--vy-gold)}
+.vy-pulse .sig{fill:var(--vy-gold);opacity:0;offset-rotate:0deg}
+.vy-pulse .mark{fill:none;stroke:var(--vy-amber);stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.vy-pulse .draw{fill:none;stroke:var(--vy-gold);stroke-width:1.4;stroke-linecap:round;opacity:0}
+.vy-pulse .vy-label{min-width:12ch}
+/* IDLE: nearly still; ONE faint ripple from the core every 6 s while visible */
+.vy-pulse[data-state=idle] .ripple{animation:vyRip 6s ease-out infinite}
+@keyframes vyRip{0%{opacity:.0;transform:scale(1)}4%{opacity:.5}30%{opacity:0;transform:scale(5)}100%{opacity:0;transform:scale(5)}}
+/* REQUEST: ring expands once, a short signal moves from the ring to the core */
+.vy-pulse[data-state=request] .ring{animation:vyReq .6s cubic-bezier(.2,.8,.2,1) 1}
+@keyframes vyReq{40%{transform:scale(1.12)}100%{transform:scale(1)}}
+.vy-pulse[data-state=request] .sig{offset-path:path('M0 -34 L0 0');animation:vyIn .6s cubic-bezier(.4,0,.2,1) 1 both}
+@keyframes vyIn{0%{offset-distance:0%;opacity:0}15%{opacity:1}85%{opacity:1}100%{offset-distance:100%;opacity:0}}
+/* THINKING: points light in sequence, one amber signal travels the triangle (runs only while the real model call runs) */
+.vy-pulse[data-state=thinking] .sig{offset-path:path('M0 -20 L17.3 10 L-17.3 10 Z');animation:vyLoop 1.5s linear infinite;opacity:1}
+@keyframes vyLoop{from{offset-distance:0%}to{offset-distance:100%}}
+.vy-pulse[data-state=thinking] .pt{animation:vyPt 1.5s linear infinite}
+.vy-pulse[data-state=thinking] .p1{animation-delay:.5s}.vy-pulse[data-state=thinking] .p2{animation-delay:1s}
+@keyframes vyPt{0%,100%{fill:var(--vy-ivory)}12%{fill:var(--vy-gold)}34%{fill:var(--vy-ivory)}}
+/* TOOL: the matching connection lights up. channel = ledger (customers/payments) | stock | sales | briefing */
+.vy-pulse[data-state=tool] .sig{animation:vyOut 1s cubic-bezier(.4,0,.2,1) infinite;opacity:1}
+.vy-pulse[data-state=tool][data-channel=ledger] .sig{offset-path:path('M0 0 L0 -20')}
+.vy-pulse[data-state=tool][data-channel=stock] .sig{offset-path:path('M0 0 L17.3 10')}
+.vy-pulse[data-state=tool][data-channel=sales] .sig{offset-path:path('M0 0 L-17.3 10')}
+.vy-pulse[data-state=tool][data-channel=briefing] .sig{offset-path:path('M0 0 L0 -20 L17.3 10 L-17.3 10 Z');animation-duration:2.4s}
+@keyframes vyOut{from{offset-distance:0%}to{offset-distance:100%}}
+.vy-pulse[data-state=tool][data-channel=ledger] .s0,.vy-pulse[data-state=tool][data-channel=ledger] .p0{stroke:var(--vy-amber);stroke-width:2;opacity:1;fill:var(--vy-gold)}
+.vy-pulse[data-state=tool][data-channel=stock] .s1,.vy-pulse[data-state=tool][data-channel=stock] .p1{stroke:var(--vy-amber);stroke-width:2;opacity:1;fill:var(--vy-gold)}
+.vy-pulse[data-state=tool][data-channel=sales] .s2,.vy-pulse[data-state=tool][data-channel=sales] .p2{stroke:var(--vy-amber);stroke-width:2;opacity:1;fill:var(--vy-gold)}
+/* APPROVAL: everything steady; a clear diamond marker sits on the ring */
+.vy-pulse[data-state=approval] .mark{opacity:1}
+.vy-pulse[data-state=approval] .ring{stroke:var(--vy-amber)}
+/* DONE: one-shot: the three points connect in sequence, the ring settles */
+.vy-pulse[data-state=done] .draw{opacity:1;stroke-dasharray:100;animation:vyDraw .9s cubic-bezier(.4,0,.2,1) 1 both}
+@keyframes vyDraw{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
+.vy-pulse[data-state=done] .ring{animation:vyReq .6s .5s cubic-bezier(.2,.8,.2,1) 1}
+/* ERROR / UNAVAILABLE: all motion stops; hollow core + dashed ring + a mark that is not colour-only */
+.vy-pulse[data-state=error] .ring,.vy-pulse[data-state=unavailable] .ring{stroke-dasharray:3 3}
+.vy-pulse[data-state=error] .pt,.vy-pulse[data-state=unavailable] .pt{fill:var(--vy-mute)}
+.vy-pulse[data-state=error] .core,.vy-pulse[data-state=unavailable] .core{fill:none;stroke:var(--vy-mute);stroke-width:1.4}
+.vy-pulse[data-state=error] .mark{opacity:1;stroke:var(--vy-gold)}
+@media (prefers-reduced-motion:reduce){.vy-pulse *{animation:none!important}}

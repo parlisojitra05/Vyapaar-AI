@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vyapaar Pulse intro</title>
+<style>
+:root{--ink:#171713;--ivory:#F5F0E7;--amber:#D99A4E;--gold:#E8BD7A;--mute:#A9A295}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:var(--ink)}
+body{overflow:hidden;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ivory)}
+#vp-intro{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(60% 55% at 50% 44%,#26231a 0%,#171713 70%);contain:layout paint;z-index:99999}
+#vp-stage{width:min(100vw,calc(100vh*16/9));aspect-ratio:16/9}
+svg{width:100%;height:100%;display:block;overflow:visible}
+.gl{fill:none;stroke:var(--ivory);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.lab{font:500 8.5px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.16em;fill:var(--mute);text-anchor:middle}
+.word{font:600 44px "Noto Sans Devanagari","Mukta","Hind","Nirmala UI","Mangal",Inter,system-ui,sans-serif;letter-spacing:0;fill:url(#gw);text-anchor:middle}
+.tag{font:400 13px Inter,system-ui,sans-serif;font-style:italic;fill:var(--mute);text-anchor:middle;letter-spacing:.04em}
+.tri{font:600 13px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.34em;fill:var(--ivory);text-anchor:middle}
+.st{font:500 12px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.12em;fill:var(--ivory)}
+#vp-skip{position:fixed;right:20px;bottom:18px;font:500 12px ui-monospace,Menlo,monospace;letter-spacing:.12em;color:var(--mute);background:#ffffff0d;border:1px solid #ffffff22;border-radius:999px;padding:9px 16px;cursor:pointer;z-index:100000;transition:all .2s ease}
+#vp-skip:hover{color:var(--ivory);border-color:#ffffff55;background:#ffffff1a}
+#vp-skip:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+@media (max-width:520px){.lab{display:none}}
+</style></head><body>
+<div id="vp-intro" role="img" aria-label="Vyapaar AI starting. Your business, understood.">
+ <div id="vp-stage"><svg id="vp" viewBox="0 0 800 450" aria-hidden="true">
+  <defs><linearGradient id="gw" x1="0" x2="1"><stop offset="0" stop-color="#F5F0E7"/><stop offset=".55" stop-color="#F5F0E7"/><stop offset="1" stop-color="#E8BD7A"/></linearGradient></defs>
+  <g id="ticks"></g>
+  <path id="hl" d="M100 190H700" fill="none" stroke="#D99A4E" stroke-width="1" pathLength="100"/>
+  <g id="net"><g id="per"></g><g id="spk"></g><circle id="ring" cx="400" cy="190" r="109" fill="none" stroke="#A9A295" stroke-width="1.2" pathLength="100"/><g id="rt"></g><circle id="ind" r="3" fill="#E8BD7A" opacity="0"/><g id="pts"></g><g id="gls"></g><g id="sg"></g><circle id="halo" cx="400" cy="190" r="14" fill="#D99A4E" opacity="0"/><circle id="core" cx="400" cy="190" r="0" fill="#D99A4E"/></g>
+  <text id="w1" class="word" x="400" y="336">व्यापार</text>
+  <path id="ul" d="M352 350H448" fill="none" stroke="#D99A4E" stroke-width="1.6" stroke-linecap="round" pathLength="100"/>
+  <circle id="uld" cx="456" cy="350" r="2.2" fill="#E8BD7A" opacity="0"/>
+  <text id="t1" class="tag" x="400" y="378">Here to make business easier.</text>
+  <text id="wa" class="tri" x="400" y="418" opacity="0">OBSERVE.</text><text id="wb" class="tri" x="400" y="418" opacity="0">UNDERSTAND.</text><text id="wc" class="tri" x="400" y="418" opacity="0">ASSIST.</text>
+  <text id="w4" class="word" x="400" y="352" style="font-size:28px" opacity="0">Meet व्यापार AI</text>
+  <text id="t4" class="tag" x="400" y="376" opacity="0">Your business, understood.</text>
+  <g id="stg" opacity="0"><circle id="sdot" cx="4" cy="0" r="4"/><text id="stx" class="st" x="16" y="4"></text></g>
+ </svg></div>
+ <button id="vp-skip" type="button" aria-label="Skip intro">SKIP INTRO</button>
+</div>
+<script>
+(function(){
+const NS='http://www.w3.org/2000/svg',$=id=>document.getElementById(id);
+/* STATUS is the REAL app state: ready | connecting | unavailable. Default is the honest one. */
+const Q=new URLSearchParams(location.search);
+const STATUS=(window.VYAPAAR_STATUS||Q.get('status')||'connecting');
+const LABEL={ready:'READY TO HELP',connecting:'CONNECTING TO YOUR AI MODEL…',unavailable:'THE AI MODEL IS CURRENTLY UNAVAILABLE'}[STATUS]||'CONNECTING TO YOUR AI MODEL…';
+const SPEED=+(Q.get('speed')||1),TOTAL=5800,NATIVE=!!window.VYAPAAR_NATIVE_SKIP;
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const clamp=x=>Math.max(0,Math.min(1,x)),seg=(t,s,d)=>clamp((t-s)/d),lerp=(a,b,k)=>a+(b-a)*k;
+const oQ=x=>1-Math.pow(1-x,4),ioC=x=>-(Math.cos(Math.PI*x)-1)/2,oBack=x=>{const c=1.5;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const el=(n,a,p)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e};
+const CX=400,CY=190,DIR=[[0,-1],[Math.cos(Math.PI/6),.5],[-Math.cos(Math.PI/6),.5]];
+const P=(k,R)=>[CX+DIR[k][0]*R,CY+DIR[k][1]*R];
+const GL=[{g:'<rect x="-8" y="-11" width="16" height="22" rx="2"/><path d="M-4 -4h8M-4 1h8M-4 6h5"/>',l:'INVOICE',o:[0,-30],lo:[0,-52]},
+          {g:'<path d="M0-11 10-5v11L0 12-10 6V-5z"/><path d="M-10-5 0 1l10-6M0 1v11"/>',l:'STOCK',o:[40,4],lo:[40,34]},
+          {g:'<path d="M-10-4h18M4-9l5 5-5 5M10 6H-8M-4 1l-5 5 5 5"/>',l:'SALE',o:[-40,4],lo:[-40,34]}];
+/* ledger ticks along the first line */
+const tk=$('ticks'),tks=[];for(let i=0;i<=20;i++){const x=100+i*30,h=i%5===0?7:4;tks.push(el('line',{x1:x,y1:190-h,x2:x,y2:190+h,stroke:'#A9A295','stroke-width':1,'stroke-linecap':'round',opacity:0},tk))}
+/* spokes, perimeter, points, glyphs */
+const spk=[],per=[],pts=[],gls=[];
+for(let k=0;k<3;k++){
+ spk.push(el('line',{x1:CX,y1:CY,x2:CX,y2:CY,stroke:'#F5F0E7','stroke-width':1.2,'stroke-linecap':'round',opacity:.55},$('spk')));
+ per.push(el('line',{x1:0,y1:0,x2:0,y2:0,stroke:'#A9A295','stroke-width':1,'stroke-linecap':'round',opacity:0},$('per')));
+ pts.push(el('circle',{r:0,fill:'#F5F0E7'},$('pts')));
+ const g=el('g',{opacity:0},$('gls')),i=el('g',{class:'gl'},g);i.innerHTML=GL[k].g;const lb=el('text',{class:'lab'},g);lb.textContent=GL[k].l;gls.push({g,i,lb});
+}
+for(let i=0;i<4;i++){const a=i*Math.PI/2+Math.PI/4;el('line',{x1:CX+Math.cos(a)*(109-5),y1:CY+Math.sin(a)*(109-5),x2:CX+Math.cos(a)*(109+5),y2:CY+Math.sin(a)*(109+5),stroke:'#A9A295','stroke-width':1.2,'stroke-linecap':'round'},$('rt'))}
+$('rt').setAttribute('opacity',0);
+/* precomputed travel path points (perimeter lap, spokes) */
+const Rn=120,Rp=64,lap=[0,1,2,0].map(k=>P(k,Rn));
+function along(path,u){const n=path.length-1,f=clamp(u)*n,i=Math.min(n-1,Math.floor(f)),k=f-i;return[path[i][0]+(path[i+1][0]-path[i][0])*k,path[i][1]+(path[i+1][1]-path[i][1])*k]}
+const sig=[0,1,2].map(()=>el('circle',{r:3,fill:'#E8BD7A',opacity:0},$('sg')));
+const wave=el('circle',{r:3.4,fill:'#D99A4E',opacity:0},$('sg'));
+$('stx').textContent=LABEL;const sdot=$('sdot'),stx=$('stx');
+sdot.setAttribute('fill',STATUS==='unavailable'?'none':'#D99A4E');if(STATUS==='unavailable'){sdot.setAttribute('stroke','#A9A295');sdot.setAttribute('stroke-width','1.4')}
+const placeSt=()=>{const w=stx.getBBox().width+16;$('stg').setAttribute('transform',`translate(${400-w/2} 404)`)};
+placeSt();(document.fonts&&document.fonts.ready||Promise.resolve()).then(placeSt);
+const WORDS=['wa','wb','wc'];
+function render(t){
+ /* SCENE 1 (0-1500): one amber line, ledger ticks, the core appears */
+ const hl=ioC(seg(t,0,800)),hfade=1-oQ(seg(t,1100,500));
+ $('hl').style.strokeDasharray=100;$('hl').style.strokeDashoffset=100*(1-hl);$('hl').setAttribute('opacity',.8*hfade);
+ tks.forEach((l,i)=>l.setAttribute('opacity',.8*oQ(seg(t,150+i*28,260))*hfade));
+ const cs=oBack(seg(t,600,500)),coreR=lerp(8,14,ioC(seg(t,4200,900)));
+ $('core').setAttribute('r',Math.max(0,cs)*coreR);
+ const w1o=seg(t,2300,300),w1=oQ(seg(t,900,500));
+ $('w1').setAttribute('opacity',w1*(1-w1o));$('w1').setAttribute('transform',`translate(0 ${(1-w1)*8})`);
+ const ud=ioC(seg(t,1050,600));$('ul').style.strokeDasharray=100;$('ul').style.strokeDashoffset=100*(1-ud);$('ul').setAttribute('opacity',(1-w1o)*clamp(ud*4));$('uld').setAttribute('opacity',oQ(seg(t,1550,300))*(1-w1o));
+ $('t1').setAttribute('opacity',oQ(seg(t,1250,400))*(1-w1o));
+ /* SCENE 2 (1500-2700): the core emits three signals to the three outer points */
+ const R=lerp(Rn,Rp,ioC(seg(t,4200,800)));
+ for(let k=0;k<3;k++){
+  const u=ioC(seg(t,1600+k*180,750)),p=P(k,R),end=[CX+(p[0]-CX)*u,CY+(p[1]-CY)*u];
+  spk[k].setAttribute('x2',end[0]);spk[k].setAttribute('y2',end[1]);
+  sig[k].setAttribute('cx',end[0]);sig[k].setAttribute('cy',end[1]);sig[k].setAttribute('opacity',u<=0||u>=1?0:Math.min(1,u*6,(1-u)*6));
+  const pr=oBack(seg(t,1600+k*180+560,420));pts[k].setAttribute('cx',p[0]);pts[k].setAttribute('cy',p[1]);
+  const wv=seg(t,2900+k*300,400),hot=Math.sin(Math.PI*wv);
+  pts[k].setAttribute('r',Math.max(0,pr)*(lerp(5,9.6,ioC(seg(t,4300,700)))+2.5*hot));pts[k].setAttribute('fill',hot>.05?'#E8BD7A':'#F5F0E7');
+  const gv=oQ(seg(t,1600+k*180+620,520))*(1-oQ(seg(t,4150,300)));
+  gls[k].g.setAttribute('opacity',gv);gls[k].g.setAttribute('transform',`translate(${p[0]+GL[k].o[0]} ${p[1]+GL[k].o[1]})`);gls[k].lb.setAttribute('x',GL[k].lo[0]-GL[k].o[0]);gls[k].lb.setAttribute('y',GL[k].lo[1]-GL[k].o[1]);
+  /* SCENE 3 (2700-4200): the three points connect */
+  const a=P(k,R),b=P((k+1)%3,R),pu=ioC(seg(t,2700+k*220,520));
+  per[k].setAttribute('x1',a[0]);per[k].setAttribute('y1',a[1]);per[k].setAttribute('x2',a[0]+(b[0]-a[0])*pu);per[k].setAttribute('y2',a[1]+(b[1]-a[1])*pu);per[k].setAttribute('opacity',.6*clamp(pu*4));
+ }
+ const wu=seg(t,3000,1000);wave.setAttribute('cx',along(lap,ioC(wu))[0]);wave.setAttribute('cy',along(lap,ioC(wu))[1]);wave.setAttribute('opacity',wu<=0||wu>=1?0:Math.min(1,wu*8,(1-wu)*8)*(1-seg(t,4200,150)));
+ const hp=seg(t,3900,500),hs=Math.sin(Math.PI*hp);$('halo').setAttribute('opacity',.3*hs);$('halo').setAttribute('r',coreR+16*hs);
+ WORDS.forEach((id,i)=>{const s=2800+i*470,o=oQ(seg(t,s,170))*(1-oQ(seg(t,s+360,150)));$(id).setAttribute('opacity',o);$(id).setAttribute('transform',`translate(0 ${(1-oQ(seg(t,s,170)))*6})`)});
+ /* SCENE 4 (4200-5700): contract into the Pulse, meet the agent, real status */
+ const rg=ioC(seg(t,4500,600));$('ring').style.strokeDasharray=100;$('ring').style.strokeDashoffset=100*(1-rg);$('ring').setAttribute('opacity',rg>0?1:0);
+ $('rt').setAttribute('opacity',oQ(seg(t,4950,300)));
+ const ia=-Math.PI/4;$('ind').setAttribute('cx',CX+Math.cos(ia)*109);$('ind').setAttribute('cy',CY+Math.sin(ia)*109);$('ind').setAttribute('opacity',oQ(seg(t,5000,300)));
+ const m4=oQ(seg(t,4700,400));$('w4').setAttribute('opacity',m4);$('w4').setAttribute('transform',`translate(0 ${(1-m4)*8})`);
+ $('t4').setAttribute('opacity',oQ(seg(t,4900,400)));$('stg').setAttribute('opacity',oQ(seg(t,5150,350)));
+ sdot.setAttribute('opacity',STATUS==='connecting'?.6+.4*Math.sin(t/260):1);
+}
+const root=$('vp-intro');let done=false,raf=0;
+function finish(){if(done)return;done=true;cancelAnimationFrame(raf);root.style.transition='opacity .35s ease';root.style.opacity=0;
+ setTimeout(()=>{root.style.display='none';try{parent.postMessage({type:'vyapaar-intro-done',status:STATUS},'*')}catch(e){}window.dispatchEvent(new CustomEvent('vyapaar:intro-done'))},360)}
+if(NATIVE){$('vp-skip').style.display='none'}else{$('vp-skip').addEventListener('click',finish);addEventListener('keydown',e=>{if(e.key==='Escape')finish()})}
+if(reduce){render(TOTAL);setTimeout(finish,900)}
+else{render(0);let t0=0;const loop=now=>{if(!t0)t0=now;const t=(now-t0)*SPEED;render(Math.min(t,TOTAL));if(t>=TOTAL+600){finish();return}raf=requestAnimationFrame(loop)};raf=requestAnimationFrame(loop)}
+window.__vp={render,TOTAL,finish,stop:()=>cancelAnimationFrame(raf)};
+})();
+</script></body></html>

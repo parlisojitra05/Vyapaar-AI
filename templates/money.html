@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+  <div>
+    <h1>Money Owed & Receivables</h1>
+    <p class="muted">Deterministic balance calculations from verified invoice and payment records.</p>
+  </div>
+</div>
+
+<div class="cards">
+  <div class="card">
+    <span>Total pending</span>
+    <b>{{ s.outstanding|inr }}</b>
+  </div>
+  <div class="card">
+    <span>Overdue</span>
+    <b class="red">{{ s.overdue|inr }}</b>
+  </div>
+  <div class="card">
+    <span>Not yet due</span>
+    <b class="gold">{{ s.current|inr }}</b>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Customer / Invoice</th>
+      <th>Total</th>
+      <th>Paid</th>
+      <th>Pending</th>
+      <th>Due Date</th>
+      <th>Priority Score</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td data-label="Invoice">
+        <b style="font-size:1rem; color:var(--ivory);">{{ r.customer }}</b><br>
+        <span style="font-family:ui-monospace,Menlo,monospace; font-size:0.85rem; color:var(--gold);">{{ r.number }}</span>
+        {% if r.days_overdue %}
+          <br><span class="red" style="font-size:0.82rem; font-weight:600;">{{ r.days_overdue }} days overdue</span>
+        {% endif %}
+        {% if r.last_reminder %}
+          <br><small style="color:var(--mute);">Last reminder: {{ r.last_reminder[:10] }} (SIMULATED)</small>
+        {% endif %}
+      </td>
+      <td data-label="Total">{{ r.total_minor|inr }}</td>
+      <td data-label="Paid">{{ r.paid_minor|inr }}</td>
+      <td data-label="Pending"><b style="color:var(--gold);">{{ r.outstanding_minor|inr }}</b></td>
+      <td data-label="Due Date">{{ r.due_date }}</td>
+      <td data-label="Priority Score">
+        <span class="pill" style="font-size:0.82rem;">Score: {{ r.score }}</span>
+        <details>
+          <summary>Factors</summary>
+          <ul>
+            {% for f in r.factors %}
+              <li>{{ f }}</li>
+            {% endfor %}
+          </ul>
+          <small>Transparent rule-based score, not a prediction.</small>
+        </details>
+      </td>
+      <td data-label="Actions">
+        <div style="display:flex; flex-direction:column; gap:0.5rem;">
+          <form method="post" action="/money/remind/{{ r.id }}">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <button type="submit" class="ghost" style="width:100%; font-size:0.84rem; padding:0.45rem 0.85rem;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              Draft Reminder
+            </button>
+          </form>
+
+          <form method="post" action="/money/pay/{{ r.id }}" style="display:flex; gap:0.35rem; flex-wrap:wrap;">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <input type="hidden" name="key" value="{{ key }}-{{ r.id }}">
+            <input name="amount" placeholder="Amount (₹)" aria-label="Amount received" style="width:90px; padding:0.35rem 0.55rem; font-size:0.84rem;" required>
+            <select name="method" aria-label="Method" style="width:75px; padding:0.35rem 0.45rem; font-size:0.84rem;">
+              <option value="cash">cash</option>
+              <option value="upi">upi</option>
+              <option value="bank">bank</option>
+            </select>
+            <button type="submit" style="font-size:0.84rem; padding:0.35rem 0.75rem;">Pay</button>
+          </form>
+        </div>
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="7" style="text-align:center; padding:2.5rem 1rem; color:var(--mute);">
+        No pending invoices found in database records.
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

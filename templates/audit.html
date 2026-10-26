@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+  <div>
+    <h1>Audit Log</h1>
+    <p class="muted">Immutable record of every business write, approval decision, and simulation event.</p>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Timestamp</th>
+      <th>Action Event</th>
+      <th>Target Entity</th>
+      <th>Details & Context</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td data-label="Timestamp" style="font-family:ui-monospace,Menlo,monospace; font-size:0.84rem; color:var(--mute);">
+        {{ r.ts }}
+      </td>
+      <td data-label="Action Event">
+        <span class="pill" style="font-size:0.8rem; background:rgba(255,255,255,0.06); color:var(--ivory); border-color:var(--border);">
+          {{ r.action }}
+        </span>
+      </td>
+      <td data-label="Target Entity"><b style="color:var(--gold);">{{ r.entity }}</b></td>
+      <td data-label="Details & Context" style="color:var(--ivory-dim);">{{ r.detail }}</td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="4" style="text-align:center; padding:2rem; color:var(--mute);">No audit events logged yet.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

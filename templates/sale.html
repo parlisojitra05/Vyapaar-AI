@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="max-width:680px; margin:0 auto;">
+  <div style="margin-bottom:1.5rem;">
+    <h1>Record New Sale</h1>
+    <p class="muted">Creates verified sale records, reduces product inventory, and tracks customer credit balances.</p>
+  </div>
+
+  <form method="post" class="card form" id="saleform" style="padding:2rem;">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="hidden" name="key" value="{{ key }}">
+
+    <label>
+      <span>Select Product</span>
+      <select name="product_id" required>
+        {% for p in prods %}
+          <option value="{{ p.id }}">{{ p.name }} — {{ p.price_minor|inr }} (Available: {{ p.stock }})</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem;">
+      <label>
+        <span>Quantity (units)</span>
+        <input name="qty" type="number" min="1" value="1" required>
+      </label>
+
+      <label>
+        <span>Customer Account</span>
+        <select name="customer_id">
+          <option value="">Walk-in Customer (Cash sale)</option>
+          {% for c in custs %}
+            <option value="{{ c.id }}">{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+
+    <label>
+      <span>Amount Paid Now (₹)</span>
+      <input name="paid" value="0" placeholder="0 = on credit, walk-in pays full">
+      <small style="color:var(--mute); font-size:0.8rem; margin-top:0.25rem;">
+        Walk-in sales must be paid in full. Account sales on credit automatically generate an invoice with 15-day terms.
+      </small>
+    </label>
+
+    <div style="margin-top:1rem; display:flex; gap:1rem; align-items:center;">
+      <button type="submit" id="savebtn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save Verified Sale
+      </button>
+      <a href="/" class="btn-secondary btn" style="font-size:0.92rem;">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+document.getElementById('saleform').addEventListener('submit', function() {
+  document.getElementById('savebtn').disabled = true;
+});
+</script>
+{% endblock %}

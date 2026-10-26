@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+  <div>
+    <h1>Approvals Center</h1>
+    <p class="muted">Human-in-the-loop: no external communication or critical write executes without your explicit decision.</p>
+  </div>
+</div>
+
+{% for a in acts %}
+<div class="approval-card">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+    <span class="approval-card-tag">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Review Before Execution
+    </span>
+    <span class="pill s-{{ a.status }}">{{ a.status|upper }}</span>
+  </div>
+
+  <h3>Action #{{ a.id }}: {{ a.type|replace('_', ' ')|title }}</h3>
+  <div style="font-size:0.84rem; color:var(--mute); margin-bottom:0.85rem;">
+    Proposed by <b>{{ a.created_by }}</b> on {{ a.created_at }}
+  </div>
+
+  <details style="margin-bottom:1rem;" open>
+    <summary>Why this action?</summary>
+    <p style="margin:0.4rem 0 0.6rem; color:var(--ivory-dim);">{{ a.reason }}</p>
+  </details>
+
+  {% if a.type == 'send_reminder' %}
+    <div class="approval-info-grid">
+      <div>
+        <span>Recipient Customer</span>
+        <b>{{ a.p.customer }}</b>
+      </div>
+      <div>
+        <span>Target Invoice</span>
+        <b>{{ a.p.invoice_number }}</b>
+      </div>
+      <div>
+        <span>Pending Amount</span>
+        <b>{{ a.p.outstanding_minor|inr }}</b>
+      </div>
+      <div>
+        <span>Delivery Mode</span>
+        <b style="color:var(--gold);">Simulated Delivery</b>
+      </div>
+    </div>
+
+    {% if a.status == 'proposed' %}
+      <form method="post" action="/approvals/{{ a.id }}/decide" class="approval-draft-area">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label for="msg-{{ a.id }}">Editable Message Draft (Review & customize before approval):</label>
+        <textarea id="msg-{{ a.id }}" name="message" rows="4" style="line-height:1.5;">{{ a.p.message }}</textarea>
+        
+        <p style="font-size:0.82rem; color:var(--mute); margin-top:0.5rem;">
+          Approving marks this reminder as SIMULATED sent. No message is sent to third-party networks without live integration.
+        </p>
+
+        <div class="approval-actions">
+          <button type="submit" name="choice" value="approve">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            Approve & Execute
+          </button>
+          <button type="submit" name="choice" value="reject" class="btn-danger">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            Reject Proposal
+          </button>
+        </div>
+      </form>
+    {% else %}
+      <div style="background:rgba(0,0,0,0.25); padding:1rem; border-radius:var(--radius-md); border:1px solid var(--border-subtle); margin-top:0.75rem;">
+        <span style="font-size:0.78rem; color:var(--mute); display:block; margin-bottom:0.25rem;">Final Message:</span>
+        <p class="pre">{{ a.p.message }}</p>
+      </div>
+    {% endif %}
+
+  {% elif a.type == 'record_sale' %}
+    <div class="approval-info-grid">
+      <div>
+        <span>Product</span>
+        <b>{{ a.p.product_name }}</b>
+      </div>
+      <div>
+        <span>Quantity</span>
+        <b>{{ a.p.qty }} units</b>
+      </div>
+      <div>
+        <span>Customer</span>
+        <b>{{ a.p.customer_name }}</b>
+      </div>
+      <div>
+        <span>Total Price</span>
+        <b>{{ a.p.total_minor|inr }}</b>
+      </div>
+      <div>
+        <span>Paid Now</span>
+        <b>{{ a.p.paid_minor|inr }}</b>
+      </div>
+    </div>
+
+    {% if a.status == 'proposed' %}
+      <form method="post" action="/approvals/{{ a.id }}/decide" style="margin-top:1.25rem;">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <div class="approval-actions">
+          <button type="submit" name="choice" value="approve">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            Approve Sale
+          </button>
+          <button type="submit" name="choice" value="reject" class="btn-danger">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            Reject Sale
+          </button>
+        </div>
+      </form>
+    {% endif %}
+  {% endif %}
+
+  {% if a.result %}
+    <div style="margin-top:1rem; padding:0.75rem 1rem; background:rgba(255,255,255,0.04); border-radius:var(--radius-md); border-left:3px solid var(--gold); font-size:0.88rem;">
+      <b style="color:var(--gold);">Execution Result:</b> {{ a.result }}
+    </div>
+  {% endif %}
+</div>
+{% else %}
+<div class="card" style="text-align:center; padding:3rem 1.5rem;">
+  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#A9A295" stroke-width="1.5" style="margin-bottom:0.75rem;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+  <h3>No pending actions waiting for approval</h3>
+  <p class="muted" style="margin-top:0.4rem;">Draft a payment reminder from <a href="/money" style="color:var(--gold);">Money Owed</a> or ask the <a href="/assistant" style="color:var(--gold);">Assistant</a> to draft a sale.</p>
+</div>
+{% endfor %}
+
+{% endblock %}

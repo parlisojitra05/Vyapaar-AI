@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+  <div>
+    <h1>Inventory & Stock</h1>
+    <p class="muted">Live product levels, SKU tracking, unit prices, and replenishment thresholds.</p>
+  </div>
+  <div>
+    <form method="post" action="/assistant" style="display:inline;">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <input type="hidden" name="q" value="Which products need restocking immediately?">
+      <button type="submit" class="ghost" style="font-size:0.88rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        Check Low Stock with Assistant
+      </button>
+    </form>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Product</th>
+      <th>SKU</th>
+      <th>Selling Price</th>
+      <th>Cost Price</th>
+      <th>Current Stock</th>
+      <th>Minimum Threshold</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in prods %}
+    <tr>
+      <td data-label="Product"><b style="color:var(--ivory);">{{ p.name }}</b></td>
+      <td data-label="SKU"><span style="font-family:ui-monospace,Menlo,monospace; font-size:0.85rem; color:var(--mute);">{{ p.sku }}</span></td>
+      <td data-label="Selling Price"><b style="color:var(--gold);">{{ p.price_minor|inr }}</b></td>
+      <td data-label="Cost Price">
+        {% if p.cost_minor is none %}
+          <em style="color:var(--mute); font-size:0.82rem;">cost unrecorded</em>
+        {% else %}
+          {{ p.cost_minor|inr }}
+        {% endif %}
+      </td>
+      <td data-label="Current Stock">
+        <b style="font-size:1.05rem;">{{ p.stock }}</b> units
+        {% if p.stock < p.min_stock %}
+          <br><span class="pill s-failed" style="margin-top:0.3rem;">Low: {{ p.stock }} &lt; {{ p.min_stock }}</span>
+        {% endif %}
+      </td>
+      <td data-label="Minimum Threshold">{{ p.min_stock }} units</td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="6" style="text-align:center; padding:2rem; color:var(--mute);">No inventory items recorded.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

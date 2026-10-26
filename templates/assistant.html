@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block content %}
+
+{# AGENT HEADER WITH THE PULSE & TRUTH CONTRACT STATUS #}
+<div class="agent-header">
+  <div class="agent-identity">
+    <div id="pulse-slot">
+      {{ render_pulse(res.pulse_state if res and res.pulse_state else 'idle', res.pulse_label if res and res.pulse_label else 'Ask Vyapaar', res.pulse_channel if res and res.pulse_channel else '', 56)|safe }}
+    </div>
+  </div>
+
+  <div class="agent-status-bar" id="truth-contract-bar">
+    {% if model_status == 'ready' %}
+      <span class="status-dot ready"></span>
+      <span>READY TO HELP</span>
+    {% elif model_status == 'connecting' %}
+      <span class="status-dot connecting"></span>
+      <span>CONNECTING TO YOUR AI MODEL…</span>
+    {% else %}
+      <span class="status-dot unavailable"></span>
+      <span>THE AI MODEL IS CURRENTLY UNAVAILABLE</span>
+    {% endif %}
+  </div>
+</div>
+
+{# ACTION TRAIL PANEL (Section 11) #}
+<div class="action-trail-panel" id="action-trail" data-open="false">
+  <button type="button" class="trail-toggle" onclick="toggleTrail()">
+    <span style="display:inline-flex; align-items:center; gap:0.5rem;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      The Action Trail (Real Evidence & Queries)
+    </span>
+    <span class="trail-icon-arrow">▼</span>
+  </button>
+  <div class="trail-expand-wrapper">
+    <div class="trail-content">
+      {% if trail %}
+        {% for t in trail|reverse %}
+          <div class="trail-item">
+            <div class="trail-item-title">{{ t.requested }}</div>
+            {% if t.records_checked %}
+              <div class="trail-item-line">Records checked: <b>{{ t.records_checked }}</b></div>
+            {% endif %}
+            {% if t.finding %}
+              <div class="trail-item-line">Finding: <b>{{ t.finding }}</b></div>
+            {% endif %}
+            {% if t.suggested_action %}
+              <div class="trail-item-line">Suggested action: <b>{{ t.suggested_action }}</b></div>
+            {% endif %}
+            <div class="trail-item-status">Status: {{ t.status }} • {{ t.updated_at }}</div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="muted" style="margin: 0.8rem 0 0;">No queries recorded yet. Every question queries real tables deterministically.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{# FIRST CONVERSATION GREETING (Section 8) #}
+{% if first_visit %}
+<div class="card" style="margin-bottom:1.5rem; border-color: rgba(217, 154, 78, 0.35);">
+  <div class="first-greeting-block">
+    <b style="font-size:1.15rem; color:var(--gold);">Namaste! I'm Vyapaar, your AI business assistant.</b>
+  </div>
+  <div class="first-greeting-block">
+    <p>I can help you review customer payments, monitor stock, understand sales, and identify what needs your attention using the business information available to me.</p>
+  </div>
+  <div class="first-greeting-block">
+    <p>I'll explain what I find, recommend practical next steps, and ask for your approval before consequential actions.</p>
+  </div>
+  <div class="first-greeting-block">
+    <p style="color:var(--gold); font-weight:600;">You stay in control.</p>
+    <p><b>What should we look at first?</b></p>
+  </div>
+</div>
+{% endif %}
+
+{# QUICK ACTIONS (Section 12) #}
+{% if not history or history|length == 0 %}
+<div class="quick-chips">
+  <button type="button" class="chip-btn" onclick="submitQuick('Which customer invoices are overdue, and what is outstanding?')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    Find overdue payments
+  </button>
+  <button type="button" class="chip-btn" onclick="submitQuick('Which products are running low according to my inventory records?')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+    Check stock levels
+  </button>
+  <button type="button" class="chip-btn" onclick="submitQuick('Give me a daily briefing based on my available business records.')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    My business today
+  </button>
+  <button type="button" class="chip-btn" onclick="focusComposer()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    Ask about my records
+  </button>
+</div>
+{% endif %}
+
+{# CHAT HISTORY #}
+<div class="chat-history" id="chat-stream">
+  {% for m in history %}
+    {% if m.role == 'user' %}
+      <div class="chat-bubble user">
+        <b>You:</b> {{ m.text }}
+      </div>
+    {% else %}
+      <div class="chat-bubble assistant">
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.4rem;">
+          <span style="font-weight:700; color:var(--gold);">Vyapaar AI:</span>
+        </div>
+        <p class="pre">{{ m.text }}</p>
+        {% if m.based_on %}
+          <div style="margin-top:0.75rem; font-size:0.85rem; color:var(--mute);">
+            Based on: {% for n, u in m.based_on %}<a href="{{ u }}" style="color:var(--gold); text-decoration:underline;">{{ n }}</a> {% endfor %}
+          </div>
+        {% endif %}
+        {% if m.proposal %}
+          <div style="margin-top:1rem; padding:0.85rem 1rem; background:rgba(217, 154, 78, 0.12); border:1px solid rgba(217, 154, 78, 0.3); border-radius:var(--radius-md);">
+            <div style="font-size:0.85rem; font-weight:700; color:var(--gold); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.4rem;">
+              Pending Approval #{{ m.proposal }}
+            </div>
+            <a href="/approvals" class="btn" style="font-size:0.85rem; padding:0.4rem 0.9rem;">Review in Approvals</a>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% endfor %}
+</div>
+
+{# COMPOSER #}
+<form method="post" action="/assistant" class="composer-form" id="composer-form" onsubmit="handleSend(event)">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input name="q" id="composer-q" class="composer-input" value="{{ q }}" maxlength="500" placeholder="Ask about payments, stock, sales, or your next move…" autocomplete="off" autofocus required>
+  <button type="submit" class="composer-btn" id="send-btn">
+    <span>Ask</span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+  </button>
+</form>
+
+<p class="muted" style="margin-top:1.25rem; font-size:0.84rem;">
+  Tip: Try "overdue invoices", "who owes the most", "check stock levels", "remind INV-0001", or "record a sale of 5 units of sugar to Anita Kirana".
+</p>
+
+<script>
+function toggleTrail() {
+  const panel = document.getElementById('action-trail');
+  const isOpen = panel.getAttribute('data-open') === 'true';
+  panel.setAttribute('data-open', (!isOpen).toString());
+}
+
+function focusComposer() {
+  const inp = document.getElementById('composer-q');
+  inp.focus();
+  inp.scrollIntoView({ behavior: 'smooth' });
+}
+
+function submitQuick(query) {
+  const inp = document.getElementById('composer-q');
+  inp.value = query;
+  setPulseState('request', 'Understanding your request…');
+  setTimeout(() => {
+    document.getElementById('composer-form').submit();
+  }, 100);
+}
+
+function setPulseState(state, label, channel = '') {
+  const pulseEl = document.querySelector('.vy-pulse');
+  if (pulseEl) {
+    pulseEl.setAttribute('data-state', state);
+    pulseEl.setAttribute('data-channel', channel);
+    const labelEl = pulseEl.querySelector('.vy-label');
+    if (labelEl) {
+      labelEl.innerHTML = '<b>' + label + '</b>';
+    }
+  }
+}
+
+function handleSend(e) {
+  const inp = document.getElementById('composer-q');
+  if (!inp.value.trim()) return;
+
+  // Real pulse transition: request -> thinking
+  setPulseState('request', 'Understanding your request…');
+  document.getElementById('send-btn').disabled = true;
+
+  setTimeout(() => {
+    setPulseState('thinking', 'Working on your request…');
+  }, 400);
+}
+</script>
+
+{% endblock %}
